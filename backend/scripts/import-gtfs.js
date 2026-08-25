@@ -11,7 +11,7 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const GTFS_DIR = path.join(__dirname, '../../temp_gtfs');
+const GTFS_DIR = path.join(__dirname, '../../../temp_gtfs');
 
 async function parseCSV(fileName) {
   const results = [];
