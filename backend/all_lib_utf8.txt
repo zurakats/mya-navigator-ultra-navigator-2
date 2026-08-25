@@ -1,0 +1,1045 @@
+﻿
+
+=== G:\zbackup\!qqq\Semester 8\Distaym Skripshit\testing_project_2\src\lib\auth.ts ===
+import { jwtVerify, SignJWT } from 'jose';
+import { cookies } from 'next/headers';
+
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'super-secret-key-for-skripsi-testing'
+);
+
+export async function signToken(payload: { userId: string; username: string }) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(JWT_SECRET);
+}
+
+export async function verifyToken(token: string) {
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    return payload as { userId: string; username: string };
+  } catch (err) {
+    return null;
+  }
+}
+
+export async function getSession() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth_token')?.value;
+  if (!token) return null;
+  return await verifyToken(token);
+}
+
+export async function setSession(token: string) {
+  const cookieStore = await cookies();
+  cookieStore.set('auth_token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7 // 7 days
+  });
+}
+
+export async function clearSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete('auth_token');
+}
+
+
+=== G:\zbackup\!qqq\Semester 8\Distaym Skripshit\testing_project_2\src\lib\guideData.ts ===
+export type GuideItem = {
+  title: string;
+  description: string;
+  image?: string;
+  icon?: any;
+};
+
+export type GuideSection = {
+  id: string;
+  title: string;
+  disclaimer?: string;
+  items: GuideItem[];
+};
+
+export const guideData: GuideSection[] = [
+  {
+    id: "mengenal-pemberhentian",
+    title: "Mengenal Pemberhentian",
+    items: [
+      {
+        title: "Halte BRT",
+        description: "Bangunan halte berplatform tinggi yang tertutup, memiliki gate tap-in/out sendiri, dan dilayani khusus oleh bus High Deck.",
+        image: "/images/guide/halte-bus-transjakarta.jpg",
+      },
+      {
+        title: "Bus Stop / Pemberhentian Non-BRT",
+        description: "Pemberhentian di pinggir jalan berupa tiang atau plang kecil bergambar bus. Pengguna melakukan tap-in pada alat (TOB) di dalam bus.",
+        image: "/images/guide/bus-stop-transjakarta.jpg",
+      },
+      {
+        title: "Perbedaan Halte dan Bus Stop",
+        description: "Halte BRT mewajibkan penumpang untuk tap-in sebelum masuk bangunan halte, sedangkan pada Bus Stop biasa penumpang wajib tap-in di mesin yang ada di dalam bus.",
+      }
+    ]
+  },
+  {
+    id: "memahami-peta",
+    title: "Memahami Peta",
+    items: [
+      {
+        title: "Ikon Halte BRT",
+        description: "Ikon yang menandakan Halte Busway. Halte ini berada di koridor khusus dan memiliki bangunan tinggi.",
+        image: "/images/guide/icon-halte-brt.png",
+      },
+      {
+        title: "Ikon Bus Stop",
+        description: "Ikon untuk titik pemberhentian non-BRT. Biasanya hanya berupa plang di pinggir jalan raya umum.",
+        image: "/images/guide/icon-bus-stop.png",
+      },
+      {
+        title: "Kode Bus & Panel LED",
+        description: "Kode trayek/koridor (misalnya B25) dibedakan dengan warna khusus di peta agar mudah dikenali. Di dunia nyata, pastikan Anda mencocokkan kode ini dengan panel LED (running text) yang menyala di bagian depan dan samping bus agar tidak salah jurusan.",
+        image: "/images/guide/foto-kode-bus.jpg",
+      }
+    ]
+  },
+  {
+    id: "mengenal-layanan",
+    title: "Mengenal Layanan",
+    disclaimer: "Tipe dan spesifikasi bus yang beroperasi di lapangan bisa sangat bervariasi (baik itu Low Deck, High Deck besar, atau High Deck kecil/Minitrans), bergantung pada ketersediaan armada dan operator yang melayani rute tersebut.",
+    items: [
+      {
+        title: "BRT (Busway)",
+        description: "Layanan utama Transjakarta yang melintas di jalur khusus (koridor) menggunakan armada bus berlantai tinggi (High Deck).",
+        image: "/images/guide/foto-brt.jpg",
+      },
+      {
+        title: "Non-BRT (Angkutan Integrasi & Rusun)",
+        description: "Layanan integrasi yang melintas di jalan umum. Walau identik dengan bus lantai rendah (Low Deck/Metrotrans), layanan ini juga kerap dilayani oleh armada High Deck standar maupun bus sedang (Minitrans).",
+        image: "/images/guide/foto-non-brt.jpg",
+      },
+      {
+        title: "Mikrotrans",
+        description: "Layanan angkutan perkotaan berukuran kecil (angkot) JakLingko yang terintegrasi dengan tarif Rp0 (menggunakan kartu uang elektronik).",
+        image: "/images/guide/foto-mikrotrans.jpg",
+      },
+      {
+        title: "Royaltrans",
+        description: "Layanan bus premium Transjakarta dengan fasilitas tempat duduk yang lebih nyaman (tanpa penumpang berdiri) dengan tarif flat khusus.",
+        image: "/images/guide/foto-royaltrans.jpg",
+      },
+      {
+        title: "Transjabodetabek",
+        description: "Layanan bus pengumpan (feeder) yang menghubungkan wilayah penyangga (Bodetabek) dengan halte koridor Transjakarta. Jenis bus yang digunakan cukup beragam.",
+        image: "/images/guide/foto-transjabodetabek.jpg",
+      }
+    ]
+  },
+  {
+    id: "pembayaran",
+    title: "Pembayaran",
+    items: [
+      {
+        title: "Cara Pembayaran",
+        description: "Pembayaran layanan Transjakarta wajib menggunakan Kartu Uang Elektronik (Brizzi, Flazz, e-Money, TapCash, JakLingko) atau melalui aplikasi JakLingko.",
+      },
+      {
+        title: "Tap In / Tap Out",
+        description: "Wajib melakukan Tap In saat naik (di gate halte / mesin bus) dan Tap Out saat turun. Jika tidak, kartu akan terblokir sementara.",
+        image: "/images/guide/foto-tap.jpg",
+      },
+      {
+        title: "Perjalanan Terintegrasi",
+        description: "Sistem JakLingko menerapkan tarif integrasi maksimal Rp10.000 untuk perjalanan pindah moda (Transjakarta, MRT, LRT) dalam waktu 3 jam.",
+      }
+    ]
+  }
+];
+
+
+=== G:\zbackup\!qqq\Semester 8\Distaym Skripshit\testing_project_2\src\lib\prisma.ts ===
+import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
+
+import 'dotenv/config';
+
+const connectionString = process.env.DATABASE_URL;
+
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+
+// Global Prisma instance for Next.js in dev mode
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({ adapter });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+
+=== G:\zbackup\!qqq\Semester 8\Distaym Skripshit\testing_project_2\src\lib\routing\DataLoader.ts ===
+import { PrismaClient } from '@prisma/client';
+import { RaptorData, Stop, RoutePattern, Trip, StopTime, Transfer } from './types';
+
+// Helper to calculate distance between two coords using Haversine formula
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3; // metres
+  const p1 = (lat1 * Math.PI) / 180;
+  const p2 = (lat2 * Math.PI) / 180;
+  const dp = ((lat2 - lat1) * Math.PI) / 180;
+  const dl = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dp / 2) * Math.sin(dp / 2) +
+    Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Convert "HH:MM:SS" to seconds since midnight
+function timeStrToSeconds(timeStr: string | null): number {
+  if (!timeStr) return 0;
+  const parts = timeStr.split(':');
+  if (parts.length !== 3) return 0;
+  return parseInt(parts[0], 10) * 3600 + parseInt(parts[1], 10) * 60 + parseInt(parts[2], 10);
+}
+
+async function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getOsrmFootDistance(lat1: number, lon1: number, lat2: number, lon2: number): Promise<{ distance: number; duration: number } | null> {
+  const url = `http://router.project-osrm.org/route/v1/foot/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      return {
+        distance: data.routes[0].distance,
+        duration: data.routes[0].duration,
+      };
+    }
+  } catch (error) {
+    console.error("OSRM Error:", error);
+  }
+  return null;
+}
+
+export class DataLoader {
+  private prisma: PrismaClient;
+  private maxFootpathDistanceMeter: number;
+  private walkingSpeedMeterPerSecond: number;
+
+  constructor(prisma: PrismaClient, maxFootpathDistanceMeter = 500) {
+    this.prisma = prisma;
+    this.maxFootpathDistanceMeter = maxFootpathDistanceMeter;
+    this.walkingSpeedMeterPerSecond = 1.2; // roughly 4.3 km/h
+  }
+
+  async loadData(): Promise<RaptorData> {
+    console.log('Loading RAPTOR data from database...');
+    const startTime = Date.now();
+
+    const dbStops = await this.prisma.stop.findMany();
+    const dbTrips = await this.prisma.trip.findMany({
+      include: { frequencies: true, route: true }
+    });
+    const dbStopTimes = await this.prisma.stopTime.findMany({
+      orderBy: [
+        { trip_id: 'asc' },
+        { stop_sequence: 'asc' },
+      ],
+    });
+    const dbFareAttributes = await this.prisma.fareAttribute.findMany();
+    const dbFareRules = await this.prisma.fareRule.findMany();
+
+    console.log(`Fetched ${dbStops.length} stops, ${dbTrips.length} trips, ${dbStopTimes.length} stop times, ${dbFareAttributes.length} fare attributes, ${dbFareRules.length} fare rules in ${Date.now() - startTime}ms.`);
+
+    const fares = new Map<string, any>();
+    for (const f of dbFareAttributes) {
+      fares.set(f.fare_id, {
+        fareId: f.fare_id,
+        price: f.price,
+        currencyType: f.currency_type,
+        paymentMethod: f.payment_method,
+        transfers: f.transfers,
+        agencyId: f.agency_id,
+        transferDuration: f.transfer_duration,
+      });
+    }
+
+    const routeFares = new Map<string, string>();
+    for (const r of dbFareRules) {
+      routeFares.set(r.route_id, r.fare_id);
+    }
+
+    const stops = new Map<string, Stop>();
+    for (const s of dbStops) {
+      stops.set(s.id, {
+        id: s.id,
+        name: s.stop_name,
+        lat: s.stop_lat,
+        lon: s.stop_lon,
+        routes: new Set<string>(),
+      });
+    }
+
+    // Group StopTimes by trip_id
+    const stopTimesByTrip = new Map<string, typeof dbStopTimes>();
+    for (const st of dbStopTimes) {
+      if (!stopTimesByTrip.has(st.trip_id)) {
+        stopTimesByTrip.set(st.trip_id, []);
+      }
+      stopTimesByTrip.get(st.trip_id)!.push(st);
+    }
+
+    const routes = new Map<string, RoutePattern>();
+    // To group trips into RoutePatterns, we use the concatenated stop IDs as a signature
+    const routeSignatureToPatternId = new Map<string, string>();
+    let patternIdCounter = 0;
+
+    for (const trip of dbTrips) {
+      const tripStopTimes = stopTimesByTrip.get(trip.id);
+      if (!tripStopTimes || tripStopTimes.length === 0) continue;
+
+      const stopIds = tripStopTimes.map(st => st.stop_id);
+      const signature = stopIds.join('|');
+
+      let patternId = routeSignatureToPatternId.get(signature);
+      let pattern: RoutePattern;
+
+      if (!patternId) {
+        patternId = `pattern_${patternIdCounter++}`;
+        routeSignatureToPatternId.set(signature, patternId);
+        pattern = {
+          id: patternId,
+          stops: stopIds,
+          trips: [],
+        };
+        routes.set(patternId, pattern);
+
+        // Update stops to know they belong to this pattern
+        for (const stopId of stopIds) {
+          const stop = stops.get(stopId);
+          if (stop) {
+            stop.routes.add(patternId);
+          }
+        }
+      } else {
+        pattern = routes.get(patternId)!;
+      }
+
+      let routeGroup = 0;
+      const desc = trip.route?.route_desc?.toLowerCase() || '';
+      if (desc.includes('brt') || desc.includes('angkutan umum integrasi') || desc.includes('rusun')) {
+        routeGroup = 1;
+      } else if (desc.includes('royaltrans')) {
+        routeGroup = 2;
+      } else if (desc.includes('mikrotrans')) {
+        routeGroup = 3;
+      } else {
+        routeGroup = 1; // Default to group 1
+      }
+
+      const parsedTrip: Trip = {
+        id: trip.id,
+        routeId: patternId,
+        realRouteId: trip.route_id,
+        routeGroup,
+        stopTimes: tripStopTimes.map(st => ({
+          arrivalTime: timeStrToSeconds(st.arrival_time),
+          departureTime: timeStrToSeconds(st.departure_time),
+          stopId: st.stop_id,
+        })),
+        headwaySecs: (trip.frequencies && trip.frequencies.length > 0) ? trip.frequencies[0].headway_secs : undefined,
+      };
+
+      pattern.trips.push(parsedTrip);
+    }
+
+    // Sort trips in each pattern by departure time at the first stop
+    for (const pattern of routes.values()) {
+      pattern.trips.sort((a, b) => {
+        return a.stopTimes[0].departureTime - b.stopTimes[0].departureTime;
+      });
+    }
+
+    console.log(`Generated ${routes.size} unique route patterns.`);
+
+    console.log(`Calculating footpaths (pre-filter ${this.maxFootpathDistanceMeter}m)...`);
+    const transfers = new Map<string, Transfer[]>();
+
+    let usePrecomputed = false;
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const filePath = path.join(process.cwd(), 'data', 'osrm_transfers.json');
+      if (fs.existsSync(filePath)) {
+        console.log("Found precomputed OSRM transfers file! Loading it...");
+        const rawData = fs.readFileSync(filePath, 'utf-8');
+        const precomputed = JSON.parse(rawData);
+        for (const stopId of Object.keys(precomputed)) {
+          const filtered = precomputed[stopId].filter((t: Transfer) => t.distanceMeter <= this.maxFootpathDistanceMeter);
+          transfers.set(stopId, filtered);
+        }
+        usePrecomputed = true;
+        console.log("Successfully loaded precomputed transfers.");
+      }
+    } catch (error) {
+      console.warn("Could not load precomputed transfers, falling back to Haversine.");
+    }
+
+    if (!usePrecomputed) {
+      console.log("Using Haversine distance for transfers (Fast Fallback)...");
+      for (const stopA of stops.values()) {
+        const stopATransfers: Transfer[] = [];
+        for (const stopB of stops.values()) {
+          if (stopA.id === stopB.id) continue;
+          const dist = getDistance(stopA.lat, stopA.lon, stopB.lat, stopB.lon);
+          if (dist <= this.maxFootpathDistanceMeter) {
+            stopATransfers.push({
+              targetStopId: stopB.id,
+              distanceMeter: dist,
+              durationSeconds: Math.ceil(dist / this.walkingSpeedMeterPerSecond),
+            });
+          }
+        }
+        transfers.set(stopA.id, stopATransfers);
+      }
+    }
+
+    console.log(`Data loading complete. Total time: ${Date.now() - startTime}ms.`);
+
+    return {
+      stops,
+      routes,
+      transfers,
+      fares,
+      routeFares,
+    };
+  }
+}
+
+
+=== G:\zbackup\!qqq\Semester 8\Distaym Skripshit\testing_project_2\src\lib\routing\raptor-instance.ts ===
+import { prisma } from '../prisma';
+import { DataLoader } from './DataLoader';
+import { RaptorData } from './types';
+
+// Declare global variable for Next.js hot-reloading
+const globalForRaptor = global as unknown as { raptorData: RaptorData };
+
+let raptorDataPromise: Promise<RaptorData> | null = null;
+
+export async function getRaptorData(): Promise<RaptorData> {
+  if (globalForRaptor.raptorData) {
+    return globalForRaptor.raptorData;
+  }
+
+  if (!raptorDataPromise) {
+    const loader = new DataLoader(prisma, 500);
+    raptorDataPromise = loader.loadData().then(data => {
+      if (process.env.NODE_ENV !== 'production') {
+        globalForRaptor.raptorData = data;
+      }
+      return data;
+    });
+  }
+
+  return raptorDataPromise;
+}
+
+
+=== G:\zbackup\!qqq\Semester 8\Distaym Skripshit\testing_project_2\src\lib\routing\raptor.ts ===
+import { RaptorData, RoutePattern, Trip, Stop } from './types';
+
+// Helper for distance
+function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371e3;
+  const p1 = (lat1 * Math.PI) / 180;
+  const p2 = (lat2 * Math.PI) / 180;
+  const dp = ((lat2 - lat1) * Math.PI) / 180;
+  const dl = ((lon2 - lon1) * Math.PI) / 180;
+  const a = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+async function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getOsrmFootDistance(lat1: number, lon1: number, lat2: number, lon2: number): Promise<{ distance: number; duration: number } | null> {
+  const url = `http://router.project-osrm.org/route/v1/foot/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+      return {
+        distance: data.routes[0].distance,
+        duration: data.routes[0].duration,
+      };
+    }
+  } catch (error) {
+    console.error("OSRM Error:", error);
+  }
+  return null;
+}
+
+async function getOsrmTable(source: {lat: number, lon: number}, destinations: {lat: number, lon: number}[]): Promise<{ distances: number[], durations: number[] } | null> {
+  if (destinations.length === 0) return { distances: [], durations: [] };
+  const coords = [source, ...destinations].map(c => `${c.lon},${c.lat}`).join(';');
+  const url = `http://router.project-osrm.org/table/v1/foot/${coords}?sources=0&annotations=distance,duration`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.code === 'Ok' && data.distances && data.durations) {
+      return {
+        distances: data.distances[0].slice(1),
+        durations: data.durations[0].slice(1),
+      };
+    }
+  } catch (error) {
+    console.error("OSRM Error:", error);
+  }
+  return null;
+}
+
+interface Pointer {
+  type: 'trip' | 'footpath' | 'initial';
+  prevStopId?: string;
+  tripId?: string;
+  routeId?: string;
+  boardTime?: number;
+  alightTime?: number;
+  tripPointer?: Pointer;
+}
+
+interface WalkStop {
+  stop: Stop;
+  dist: number;
+  duration?: number;
+}
+
+export class Raptor {
+  private data: RaptorData;
+
+  constructor(data: RaptorData) {
+    this.data = data;
+  }
+
+  async findRoute(
+    startLat: number,
+    startLon: number,
+    destLat: number,
+    destLon: number,
+    departureTimeSeconds: number,
+    maxTransfers: number = 3,
+    allowedRouteGroups: number[] = [1, 2, 3],
+    maxWalkDist: number = 500
+  ): Promise<{ arrivalTime?: number, journeys?: any[], error?: string } | null> {
+    // Phase 1: Initializations maxTransfers + 1
+    const K = maxTransfers + 1; // max trips is maxTransfers + 1
+    
+    // tau[k].get(p) = earliest arrival at stop p using up to k trips
+    const tau: Map<string, number>[] = Array.from({ length: K + 1 }, () => new Map<string, number>());
+    // tau_star.get(p) = earliest known arrival at stop p overall
+    const tau_star = new Map<string, number>();
+
+    // journey pointers: key is `${k}_${stopId}`
+    const pointers = new Map<string, Pointer>();
+
+    const getTau = (k: number, p: string) => tau[k].has(p) ? tau[k].get(p)! : Infinity;
+    const getTauStar = (p: string) => tau_star.has(p) ? tau_star.get(p)! : Infinity;
+    const setTau = (k: number, p: string, time: number) => tau[k].set(p, time);
+    const setTauStar = (p: string, time: number) => tau_star.set(p, time);
+
+    let markedStops = new Set<string>();
+
+    // 1. Initialization
+    // Find stops near source
+    const startRadius = maxWalkDist; // meters
+    const destRadius = maxWalkDist;
+    const walkingSpeed = 1.2; // m/s
+
+    let sourceStops: WalkStop[] = Array.from(this.data.stops.values())
+      .map(s => ({ stop: s, dist: getDistance(startLat, startLon, s.lat, s.lon) }));
+    if (startRadius === -1) {
+      sourceStops.sort((a, b) => a.dist - b.dist);
+      sourceStops = sourceStops.slice(0, 15);
+    } else {
+      sourceStops = sourceStops.filter(s => s.dist <= startRadius);
+    }
+
+    let destStops: WalkStop[] = Array.from(this.data.stops.values())
+      .map(s => ({ stop: s, dist: getDistance(destLat, destLon, s.lat, s.lon) }));
+    if (destRadius === -1) {
+      destStops.sort((a, b) => a.dist - b.dist);
+      destStops = destStops.slice(0, 15);
+    } else {
+      destStops = destStops.filter(s => s.dist <= destRadius);
+    }
+
+    // OSRM Filter
+    console.log(`Pre-filtered source stops: ${sourceStops.length}, dest stops: ${destStops.length}. Verifying with OSRM Table API...`);
+    const validSourceStops = [];
+    if (sourceStops.length > 0) {
+      const osrmSources = await getOsrmTable(
+        { lat: startLat, lon: startLon },
+        sourceStops.map(s => ({ lat: s.stop.lat, lon: s.stop.lon }))
+      );
+      if (osrmSources) {
+        for (let i = 0; i < sourceStops.length; i++) {
+          const dist = osrmSources.distances[i];
+          const dur = osrmSources.durations[i];
+          if (dist !== null && dist !== undefined && (startRadius === -1 || dist <= startRadius)) {
+            validSourceStops.push({ stop: sourceStops[i].stop, dist, duration: dur });
+          } else {
+            // Fallback to straight-line distance if OSRM fails or returns a detour > radius
+            validSourceStops.push({ stop: sourceStops[i].stop, dist: sourceStops[i].dist, duration: sourceStops[i].dist / 1.2 });
+          }
+        }
+      } else {
+        // Fallback to straight-line distance if OSRM fails
+        for (const s of sourceStops) {
+          validSourceStops.push({ stop: s.stop, dist: s.dist, duration: s.dist / 1.2 });
+        }
+      }
+    }
+    sourceStops = validSourceStops as any;
+
+    const validDestStops = [];
+    if (destStops.length > 0) {
+      const osrmDests = await getOsrmTable(
+        { lat: destLat, lon: destLon },
+        destStops.map(s => ({ lat: s.stop.lat, lon: s.stop.lon }))
+      );
+      if (osrmDests) {
+        for (let i = 0; i < destStops.length; i++) {
+          const dist = osrmDests.distances[i];
+          const dur = osrmDests.durations[i];
+          if (dist !== null && dist !== undefined && (destRadius === -1 || dist <= destRadius)) {
+            validDestStops.push({ stop: destStops[i].stop, dist, duration: dur });
+          } else {
+            // Fallback to straight-line distance if OSRM fails or returns a detour > radius
+            validDestStops.push({ stop: destStops[i].stop, dist: destStops[i].dist, duration: destStops[i].dist / 1.2 });
+          }
+        }
+      } else {
+        // Fallback to straight-line distance if OSRM fails
+        for (const s of destStops) {
+          validDestStops.push({ stop: s.stop, dist: s.dist, duration: s.dist / 1.2 });
+        }
+      }
+    }
+    destStops = validDestStops as any;
+
+    const destStopIds = new Set(destStops.map(s => s.stop.id));
+
+    console.log(`Found ${sourceStops.length} source stops and ${destStops.length} dest stops within radius`);
+
+    if (sourceStops.length === 0 || destStops.length === 0) {
+      return { error: 'No stops found near source or destination' };
+    }
+
+    for (const { stop, dist, duration } of sourceStops) {
+      // If OSRM duration is available, use it, else fallback to dist/speed
+      const walkTime = duration ? Math.ceil(duration) : Math.ceil(dist / walkingSpeed);
+      const arrival = departureTimeSeconds + walkTime;
+      setTau(0, stop.id, arrival);
+      setTauStar(stop.id, arrival);
+      markedStops.add(stop.id);
+      pointers.set(`0_${stop.id}`, { type: 'initial' });
+    }
+
+    // 2. Rounds
+    for (let k = 1; k <= K; k++) {
+      // Step 2.1: Accumulate routes serving marked stops
+      const Q = new Map<string, string>(); // routeId -> stopId (earliest marked stop on route)
+      for (const p of markedStops) {
+        const stop = this.data.stops.get(p);
+        if (stop) {
+          for (const routeId of stop.routes) {
+            const pattern = this.data.routes.get(routeId);
+            if (pattern) {
+              const stopIndex = pattern.stops.indexOf(p);
+              if (!Q.has(routeId)) {
+                Q.set(routeId, p);
+              } else {
+                // Keep the earliest stop in the pattern sequence
+                const existingStopId = Q.get(routeId)!;
+                const existingIndex = pattern.stops.indexOf(existingStopId);
+                if (stopIndex < existingIndex) {
+                  Q.set(routeId, p);
+                }
+              }
+            }
+          }
+        }
+      }
+
+      markedStops.clear();
+
+      // Step 2.2: Traverse each route
+      console.log(`Round ${k}: scanning ${Q.size} routes from marked stops...`);
+      let improvements = 0;
+
+      for (const [routeId, p] of Q.entries()) {
+        const pattern = this.data.routes.get(routeId)!;
+        let t: Trip | null = null;
+        let boardTime: number | null = null;
+        let boardStopId: string | null = null;
+        
+        const startIndex = pattern.stops.indexOf(p);
+
+        for (let i = startIndex; i < pattern.stops.length; i++) {
+          const pi = pattern.stops[i];
+
+          // Can we alight and improve arrival time?
+          if (t !== null && t.stopTimes[i] && boardTime !== null && boardStopId !== null) {
+            // Frequency-based arrival calculation:
+            const boardIndex = pattern.stops.indexOf(boardStopId);
+            const relativeDuration = t.stopTimes[i].arrivalTime - t.stopTimes[boardIndex].departureTime;
+            const arrivalTime = boardTime + relativeDuration;
+
+            // Also need to check if we beat the target destination arrival time if pi is a dest stop
+            let destWalkTime = 0;
+            if (destStopIds.has(pi)) {
+                const dest = destStops.find(d => d.stop.id === pi);
+                if (dest) destWalkTime = Math.ceil(dest.dist / walkingSpeed);
+            }
+
+            if (arrivalTime < getTau(k, pi) && arrivalTime < getTauStar(pi)) {
+              setTau(k, pi, arrivalTime);
+              setTauStar(pi, arrivalTime);
+              markedStops.add(pi);
+              improvements++;
+              pointers.set(`${k}_${pi}`, {
+                type: 'trip',
+                prevStopId: boardStopId,
+                tripId: t.id,
+                routeId: routeId,
+                boardTime: boardTime,
+                alightTime: arrivalTime
+              });
+            }
+          }
+
+          // Can we catch a trip?
+          const prevTauKMinus1 = getTau(k - 1, pi);
+          if (pattern.trips.length > 0 && pattern.trips[0].stopTimes[i]) {
+            const tripGrp = pattern.trips[0].routeGroup;
+            if (allowedRouteGroups.includes(tripGrp)) {
+              const headwaySecs = pattern.trips[0].headwaySecs || 300;
+            const Ti = pattern.trips[0].stopTimes[i].departureTime;
+            const tUser = prevTauKMinus1;
+            
+            // Calculate exact departure time using frequency
+            const calculatedBoardTime = Ti + Math.ceil((tUser - Ti) / headwaySecs) * headwaySecs;
+
+            // Only attempt to board if we haven't boarded yet, or if this calculated departure beats our current boardTime
+            if (t === null || calculatedBoardTime < boardTime!) {
+                t = pattern.trips[0];
+                boardStopId = pi;
+                boardTime = calculatedBoardTime;
+            }
+          }
+        }
+      }
+    }
+
+      console.log(`Round ${k}: made ${improvements} improvements, processing footpaths...`);
+
+      // Step 2.3: Footpaths
+      // We must make a copy of markedStops since we will modify it
+      const stopsToProcess = Array.from(markedStops);
+      
+      // Cache the arrival times and trip pointers from trips (Step 2.2) to prevent footpath chaining
+      const tau_k_trips = new Map<string, number>();
+      const trip_pointers = new Map<string, any>();
+      for (const p of stopsToProcess) {
+        tau_k_trips.set(p, getTau(k, p));
+        trip_pointers.set(p, pointers.get(`${k}_${p}`));
+      }
+
+      for (const p of stopsToProcess) {
+        const transfers = this.data.transfers.get(p) || [];
+        const arrivalAtP = tau_k_trips.get(p)!;
+        const tripPtrAtP = trip_pointers.get(p);
+        
+        for (const tr of transfers) {
+          if (maxWalkDist !== -1 && tr.distanceMeter > maxWalkDist) continue;
+          
+          // Penalti psikologis untuk jalan kaki: durasi dikali 1.5x + 3 menit flat penalty.
+          // Mencegah user disuruh turun lebih awal dari bus hanya untuk menghemat 1-2 menit.
+          const perceivedWalkDuration = Math.ceil(tr.durationSeconds * 1.5) + 180;
+          const arrivalAtPPrime = arrivalAtP + perceivedWalkDuration;
+          if (arrivalAtPPrime < getTau(k, tr.targetStopId) && arrivalAtPPrime < getTauStar(tr.targetStopId)) {
+            setTau(k, tr.targetStopId, arrivalAtPPrime);
+            setTauStar(tr.targetStopId, arrivalAtPPrime);
+            markedStops.add(tr.targetStopId);
+            pointers.set(`${k}_${tr.targetStopId}`, {
+              type: 'footpath',
+              prevStopId: p,
+              boardTime: arrivalAtP,
+              alightTime: arrivalAtPPrime,
+              tripPointer: tripPtrAtP
+            });
+          }
+        }
+      }
+
+      if (markedStops.size === 0) break;
+    }
+
+    // 3. Find the best destination and reconstruct
+    const reconstructJourneyForK = (destStopId: string, finalK: number, finalTime: number) => {
+      const journey = [];
+      let currStop = destStopId;
+      let currK = finalK;
+      
+      const finalDestData = destStops.find(d => d.stop.id === destStopId)!;
+      journey.push({
+        type: 'walk_to_destination',
+        fromStop: this.data.stops.get(destStopId)!.name,
+        duration: finalDestData.duration ? Math.ceil(finalDestData.duration) : Math.ceil(finalDestData.dist / walkingSpeed),
+        arrivalTime: finalTime
+      });
+
+      while (currK >= 0) {
+        const ptr = pointers.get(`${currK}_${currStop}`);
+        if (!ptr) {
+           let found = false;
+           for (let k = currK - 1; k >= 0; k--) {
+              if (pointers.has(`${k}_${currStop}`)) {
+                 currK = k;
+                 found = true;
+                 break;
+              }
+           }
+           if (!found) break;
+           continue;
+        }
+
+        if (ptr.type === 'initial') {
+          journey.push({
+            type: 'walk_from_source',
+            toStop: this.data.stops.get(currStop)!.name,
+            arrivalTime: getTauStar(currStop)
+          });
+          break;
+        } else if (ptr.type === 'footpath') {
+          journey.push({
+            type: 'footpath',
+            fromStopId: ptr.prevStopId!,
+            toStopId: currStop,
+            fromStop: this.data.stops.get(ptr.prevStopId!)!.name,
+            toStop: this.data.stops.get(currStop)!.name,
+            duration: ptr.alightTime! - ptr.boardTime!
+          });
+          
+          const tripPtr = ptr.tripPointer;
+          if (tripPtr && tripPtr.type === 'trip') {
+            const pattern = this.data.routes.get(tripPtr.routeId!);
+            const trip = pattern?.trips.find(t => t.id === tripPtr.tripId);
+            journey.push({
+              type: 'transit',
+              fromStopId: tripPtr.prevStopId!,
+              toStopId: ptr.prevStopId!,
+              fromStop: this.data.stops.get(tripPtr.prevStopId!)!.name,
+              toStop: this.data.stops.get(ptr.prevStopId!)!.name,
+              tripId: tripPtr.tripId,
+              routeId: tripPtr.routeId,
+              realRouteId: trip?.realRouteId,
+              boardTime: tripPtr.boardTime,
+              alightTime: tripPtr.alightTime
+            });
+            currStop = tripPtr.prevStopId!;
+            currK--;
+          } else {
+            currStop = ptr.prevStopId!;
+          }
+        } else if (ptr.type === 'trip') {
+          const pattern = this.data.routes.get(ptr.routeId!);
+          const trip = pattern?.trips.find(t => t.id === ptr.tripId);
+          journey.push({
+            type: 'transit',
+            fromStopId: ptr.prevStopId!,
+            toStopId: currStop,
+            fromStop: this.data.stops.get(ptr.prevStopId!)!.name,
+            toStop: this.data.stops.get(currStop)!.name,
+            tripId: ptr.tripId,
+            routeId: ptr.routeId,
+            realRouteId: trip?.realRouteId,
+            boardTime: ptr.boardTime,
+            alightTime: ptr.alightTime
+          });
+          currStop = ptr.prevStopId!;
+          currK--;
+        } else if (ptr.type === 'initial') {
+          break;
+        }
+      }
+      journey.reverse();
+      return journey;
+    };
+
+    const journeys = [];
+    let absoluteBest = Infinity;
+
+    for (let k = 1; k <= K; k++) {
+      let bestDestForK: string | null = null;
+      let bestTimeForK = Infinity;
+      
+      for (const dest of destStops) {
+        const arrivalAtDestStop = getTau(k, dest.stop.id);
+        const walkTimeToDest = dest.duration ? Math.ceil(dest.duration) : Math.ceil(dest.dist / walkingSpeed);
+        
+        // Tambahkan penalti yang sama untuk jalan kaki ke tujuan akhir
+        const perceivedWalkTimeToDest = walkTimeToDest > 0 ? Math.ceil(walkTimeToDest * 1.5) + 180 : 0;
+        const totalTime = arrivalAtDestStop + perceivedWalkTimeToDest;
+        
+        if (totalTime < bestTimeForK) {
+          bestTimeForK = totalTime;
+          bestDestForK = dest.stop.id;
+        }
+      }
+      
+      if (bestDestForK && bestTimeForK < Infinity) {
+        if (bestTimeForK < absoluteBest) { // Only accept routes with more transfers if they are strictly faster
+          absoluteBest = bestTimeForK;
+          const journeyForK = reconstructJourneyForK(bestDestForK, k, bestTimeForK);
+          
+          // Fare Post-Processing
+          let totalFare = 0;
+          let currentSessionStartTime: number | null = null;
+          let currentSessionFareId: string | null = null;
+          let currentSessionTransfers = 0;
+
+          for (const leg of journeyForK) {
+            if (leg.type === 'transit' && leg.realRouteId) {
+              const fareId = this.data.routeFares?.get(leg.realRouteId);
+              const fareAttr = (fareId && this.data.fares) ? this.data.fares.get(fareId) : null;
+              
+              leg.fareId = fareId;
+              leg.farePrice = 0; // Default to free if integrated
+
+              if (fareAttr) {
+                // Determine if this is a new session
+                // Different fare product? (e.g., GR to FP might be integrated, but for now strict same fare_id or assume new)
+                // We'll treat FP and FP2 as compatible if we want, but let's strictly use GR -> FP integration logic if possible.
+                // Simple logic: if fareId differs (e.g. PP to FP), it's a new session, UNLESS it's GR -> FP/FP2 integration.
+                // For simplicity, let's just check if it's the first leg, or if time exceeded, or if transfer limit exceeded.
+                // If fareId differs, normally it's a new session. But JAK (GR) to BRT (FP) is integrated? In GTFS they are different fare_ids.
+                // The prompt mentions JakLingko max Rp10.000, but says for Transjakarta just focus on 3 hours.
+                // Let's do: if fare product price > 0 and previous was 0, we charge the difference (e.g. 3500 - 0 = 3500).
+                
+                let isNewSession = false;
+                if (currentSessionStartTime === null) {
+                  isNewSession = true;
+                } else if ((leg.boardTime! - currentSessionStartTime) > (fareAttr.transferDuration || Infinity)) {
+                  isNewSession = true;
+                } else if (fareAttr.transfers !== null && currentSessionTransfers >= fareAttr.transfers) {
+                  isNewSession = true;
+                } else if (currentSessionFareId !== fareId && fareAttr.price > 0 && this.data.fares.get(currentSessionFareId!)?.price === 0) {
+                   // GR to FP: charge the difference (3500 - 0 = 3500)
+                   isNewSession = true;
+                } else if (currentSessionFareId !== fareId && fareAttr.price > 0 && this.data.fares.get(currentSessionFareId!)?.price! > 0) {
+                   // e.g., FP to PP -> new session
+                   isNewSession = true;
+                }
+
+                if (isNewSession) {
+                  leg.farePrice = fareAttr.price;
+                  totalFare += fareAttr.price;
+                  currentSessionStartTime = leg.boardTime!;
+                  currentSessionFareId = fareId;
+                  currentSessionTransfers = 0;
+                } else {
+                  currentSessionTransfers++;
+                }
+              }
+            }
+          }
+
+          journeys.push({ arrivalTime: bestTimeForK, totalFare, journey: journeyForK });
+        }
+      }
+    }
+
+    if (journeys.length === 0) {
+      return { error: 'No route found' };
+    }
+
+    return {
+      arrivalTime: absoluteBest,
+      journeys
+    };
+  }
+}
+
+
+=== G:\zbackup\!qqq\Semester 8\Distaym Skripshit\testing_project_2\src\lib\routing\types.ts ===
+export interface Stop {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  // Routes (StopPatterns) that visit this stop
+  routes: Set<string>;
+}
+
+export interface StopTime {
+  arrivalTime: number; // Seconds since midnight
+  departureTime: number; // Seconds since midnight
+  stopId: string;
+}
+
+export interface Trip {
+  id: string;
+  routeId: string; // The ID of the StopPattern this trip belongs to
+  realRouteId: string; // The actual GTFS route_id
+  routeGroup: number; // 1: BRT/Integrasi/Rusun, 2: Royaltrans, 3: Mikrotrans, 0: Other
+  stopTimes: StopTime[];
+  headwaySecs?: number;
+}
+
+export interface RoutePattern {
+  id: string;
+  // Ordered array of stop IDs that this route visits
+  stops: string[];
+  // Array of trips that serve this exact pattern of stops.
+  // Must be sorted by the departure time of the FIRST stop.
+  trips: Trip[];
+}
+
+export interface Transfer {
+  targetStopId: string;
+  distanceMeter: number;
+  durationSeconds: number;
+}
+
+export interface FareAttribute {
+  fareId: string;
+  price: number;
+  currencyType: string;
+  paymentMethod: number;
+  transfers: number | null;
+  agencyId: string | null;
+  transferDuration: number | null;
+}
+
+export interface RaptorData {
+  stops: Map<string, Stop>;
+  routes: Map<string, RoutePattern>;
+  // Adjacency list for walking transfers
+  transfers: Map<string, Transfer[]>;
+  fares: Map<string, FareAttribute>;
+  routeFares: Map<string, string>;
+}

@@ -1,0 +1,60 @@
+# ==========================================
+# 1. Node.js & Dependencies
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# 2. Environment Variables & Secrets
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# ==========================================
+# 3. Build & Output Directories
+# ==========================================
+dist/
+dist-ssr/
+build/
+coverage/
+
+# ==========================================
+# 4. Database & ORM (Prisma)
+# ==========================================
+# Mengabaikan hasil generate Prisma lokal jika ada di root/backend
+/backend/generated/prisma/
+*.db
+*.sqlite
+
+# ==========================================
+# 5. IDE, Editor & OS Files
+# ==========================================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# 6. AI Coding Assistants & Agents
+# ==========================================
+# Mengabaikan riwayat, cache, atau konfigurasi spesifik dari AI IDE
+.agents/
+.claude/
+.windsurf/
+
+# ==========================================
+# 7. Codebase Learning
+# ==========================================
+/Codebase/
