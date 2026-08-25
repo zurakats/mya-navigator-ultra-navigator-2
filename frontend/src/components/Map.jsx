@@ -156,7 +156,7 @@ export default function TransjakartaMap({
       
       const addPath = async (p1, p2) => {
         try {
-          const url = `http://router.project-osrm.org/route/v1/foot/${p1.stop_lon},${p1.stop_lat};${p2.stop_lon},${p2.stop_lat}?geometries=geojson`;
+          const url = `https://router.project-osrm.org/route/v1/foot/${p1.stop_lon},${p1.stop_lat};${p2.stop_lon},${p2.stop_lat}?geometries=geojson`;
           const res = await fetch(url);
           if (res.ok) {
             const data = await res.json();
