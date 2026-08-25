@@ -1,0 +1,8 @@
+{
+  "name": "distaym-transit-app",
+  "version": "1.0.0",
+  "description": "Root package.json for Glitch deployment",
+  "scripts": {
+    "start": "cd backend && npm install && npx prisma generate && node server.js"
+  }
+}
