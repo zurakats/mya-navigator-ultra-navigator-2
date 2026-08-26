@@ -32,7 +32,7 @@ async function getOsrmFootDistance(lat1: number, lon1: number, lat2: number, lon
   return null;
 }
 
-async function getOsrmTable(source: {lat: number, lon: number}, destinations: {lat: number, lon: number}[]): Promise<{ distances: number[], durations: number[] } | null> {
+async function getOsrmTable(source: { lat: number, lon: number }, destinations: { lat: number, lon: number }[]): Promise<{ distances: number[], durations: number[] } | null> {
   if (destinations.length === 0) return { distances: [], durations: [] };
   const coords = [source, ...destinations].map(c => `${c.lon},${c.lat}`).join(';');
   const url = `http://router.project-osrm.org/table/v1/foot/${coords}?sources=0&annotations=distance,duration`;
@@ -86,7 +86,7 @@ export class Raptor {
     maxWalkDist: number = 500
   ): Promise<{ arrivalTime?: number, journeys?: any[], error?: string } | null> {
     const K = maxTransfers + 1;
-    
+
     const tau: Map<string, number>[] = Array.from({ length: K + 1 }, () => new Map<string, number>());
     const tau_star = new Map<string, number>();
 
@@ -220,7 +220,7 @@ export class Raptor {
         let t: Trip | null = null;
         let boardTime: number | null = null;
         let boardStopId: string | null = null;
-        
+
         const startIndex = pattern.stops.indexOf(p);
 
         for (let i = startIndex; i < pattern.stops.length; i++) {
@@ -233,8 +233,8 @@ export class Raptor {
 
             let destWalkTime = 0;
             if (destStopIds.has(pi)) {
-                const dest = destStops.find(d => d.stop.id === pi);
-                if (dest) destWalkTime = Math.ceil(dest.dist / walkingSpeed);
+              const dest = destStops.find(d => d.stop.id === pi);
+              if (dest) destWalkTime = Math.ceil(dest.dist / walkingSpeed);
             }
 
             if (arrivalTime < getTau(k, pi) && arrivalTime < getTauStar(pi)) {
@@ -258,25 +258,25 @@ export class Raptor {
             const tripGrp = pattern.trips[0].routeGroup;
             if (allowedRouteGroups.includes(tripGrp)) {
               const headwaySecs = pattern.trips[0].headwaySecs || 300;
-            const Ti = pattern.trips[0].stopTimes[i].departureTime;
-            const tUser = prevTauKMinus1;
-            
-            const calculatedBoardTime = Ti + Math.ceil((tUser - Ti) / headwaySecs) * headwaySecs;
+              const Ti = pattern.trips[0].stopTimes[i].departureTime;
+              const tUser = prevTauKMinus1;
 
-            if (t === null || calculatedBoardTime < boardTime!) {
+              const calculatedBoardTime = Ti + Math.ceil((tUser - Ti) / headwaySecs) * headwaySecs;
+
+              if (t === null || calculatedBoardTime < boardTime!) {
                 t = pattern.trips[0];
                 boardStopId = pi;
                 boardTime = calculatedBoardTime;
+              }
             }
           }
         }
       }
-    }
 
       console.log(`Round ${k}: made ${improvements} improvements, processing footpaths...`);
 
       const stopsToProcess = Array.from(markedStops);
-      
+
       const tau_k_trips = new Map<string, number>();
       const trip_pointers = new Map<string, any>();
       for (const p of stopsToProcess) {
@@ -288,10 +288,10 @@ export class Raptor {
         const transfers = this.data.transfers.get(p) || [];
         const arrivalAtP = tau_k_trips.get(p)!;
         const tripPtrAtP = trip_pointers.get(p);
-        
+
         for (const tr of transfers) {
           if (maxWalkDist !== -1 && tr.distanceMeter > maxWalkDist) continue;
-          
+
           const perceivedWalkDuration = Math.ceil(tr.durationSeconds * 1.5) + 180;
           const arrivalAtPPrime = arrivalAtP + perceivedWalkDuration;
           if (arrivalAtPPrime < getTau(k, tr.targetStopId) && arrivalAtPPrime < getTauStar(tr.targetStopId)) {
@@ -316,7 +316,7 @@ export class Raptor {
       const journey = [];
       let currStop = destStopId;
       let currK = finalK;
-      
+
       const finalDestData = destStops.find(d => d.stop.id === destStopId)!;
       journey.push({
         type: 'walk_to_destination',
@@ -328,16 +328,16 @@ export class Raptor {
       while (currK >= 0) {
         const ptr = pointers.get(`${currK}_${currStop}`);
         if (!ptr) {
-           let found = false;
-           for (let k = currK - 1; k >= 0; k--) {
-              if (pointers.has(`${k}_${currStop}`)) {
-                 currK = k;
-                 found = true;
-                 break;
-              }
-           }
-           if (!found) break;
-           continue;
+          let found = false;
+          for (let k = currK - 1; k >= 0; k--) {
+            if (pointers.has(`${k}_${currStop}`)) {
+              currK = k;
+              found = true;
+              break;
+            }
+          }
+          if (!found) break;
+          continue;
         }
 
         if (ptr.type === 'initial') {
@@ -356,7 +356,7 @@ export class Raptor {
             toStop: this.data.stops.get(currStop)!.name,
             duration: ptr.alightTime! - ptr.boardTime!
           });
-          
+
           const tripPtr = ptr.tripPointer;
           if (tripPtr && tripPtr.type === 'trip') {
             const pattern = this.data.routes.get(tripPtr.routeId!);
@@ -409,25 +409,25 @@ export class Raptor {
     for (let k = 1; k <= K; k++) {
       let bestDestForK: string | null = null;
       let bestTimeForK = Infinity;
-      
+
       for (const dest of destStops) {
         const arrivalAtDestStop = getTau(k, dest.stop.id);
         const walkTimeToDest = dest.duration ? Math.ceil(dest.duration) : Math.ceil(dest.dist / walkingSpeed);
-        
+
         const perceivedWalkTimeToDest = walkTimeToDest > 0 ? Math.ceil(walkTimeToDest * 1.5) + 180 : 0;
         const totalTime = arrivalAtDestStop + perceivedWalkTimeToDest;
-        
+
         if (totalTime < bestTimeForK) {
           bestTimeForK = totalTime;
           bestDestForK = dest.stop.id;
         }
       }
-      
+
       if (bestDestForK && bestTimeForK < Infinity) {
         if (bestTimeForK < absoluteBest) {
           absoluteBest = bestTimeForK;
           const journeyForK = reconstructJourneyForK(bestDestForK, k, bestTimeForK);
-          
+
           let totalFare = 0;
           let currentSessionStartTime: number | null = null;
           let currentSessionFareId: string | null = null;
@@ -437,12 +437,12 @@ export class Raptor {
             if (leg.type === 'transit' && leg.realRouteId) {
               const fareId = this.data.routeFares?.get(leg.realRouteId);
               const fareAttr = (fareId && this.data.fares) ? this.data.fares.get(fareId) : null;
-              
+
               leg.fareId = fareId;
               leg.farePrice = 0;
 
               if (fareAttr) {
-                
+
                 let isNewSession = false;
                 if (currentSessionStartTime === null) {
                   isNewSession = true;
@@ -451,9 +451,9 @@ export class Raptor {
                 } else if (fareAttr.transfers !== null && currentSessionTransfers >= fareAttr.transfers) {
                   isNewSession = true;
                 } else if (currentSessionFareId !== fareId && fareAttr.price > 0 && this.data.fares.get(currentSessionFareId!)?.price === 0) {
-                   isNewSession = true;
+                  isNewSession = true;
                 } else if (currentSessionFareId !== fareId && fareAttr.price > 0 && this.data.fares.get(currentSessionFareId!)?.price! > 0) {
-                   isNewSession = true;
+                  isNewSession = true;
                 }
 
                 if (isNewSession) {

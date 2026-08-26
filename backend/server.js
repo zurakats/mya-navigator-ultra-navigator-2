@@ -27,7 +27,13 @@ app.post('/api/auth/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) return res.status(401).json({ error: 'Invalid credentials' });
     const token = await signToken({ userId: user.id, username: user.username });
-    res.cookie('auth_token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 60 * 60 * 24 * 7 * 1000 });
+    res.cookie('auth_token', token, { 
+      httpOnly: true, 
+      secure: true, // Wajib true untuk sameSite 'none' (diperlukan HTTPS)
+      sameSite: 'none', // Wajib 'none' untuk lintas domain (Vercel ke Cloudflare Tunnel)
+      path: '/', 
+      maxAge: 60 * 60 * 24 * 7 * 1000 
+    });
     res.json({ success: true, user: { id: user.id, username: user.username, name: user.name } });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
@@ -35,7 +41,12 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('auth_token');
+  res.clearCookie('auth_token', { 
+    httpOnly: true, 
+    secure: true, 
+    sameSite: 'none', 
+    path: '/' 
+  });
   res.json({ success: true });
 });
 
@@ -253,6 +264,8 @@ app.get('/api/navigate', async (req, res) => {
       return weightedScoreA - weightedScoreB;
     });
 
+    const perfEnd = performance.now();
+    console.log(`Waktu pencarian rute: ${(perfEnd - perfStart).toFixed(2)} ms`);
     res.json({ itineraries: itineraries.slice(0, 6) });
   } catch (error) {
     res.status(500).json({ error: 'Failed to calculate route' });
@@ -268,12 +281,17 @@ app.get('/api/navigate/raptor', async (req, res) => {
   if (!startLat || !startLon || !destLat || !destLon) return res.status(400).json({ error: 'Missing coordinates' });
 
   try {
+    const perfStart = performance.now();
     const timeParts = reqTime.split(':');
     let reqTimeSeconds = 0;
     if (timeParts.length === 3) reqTimeSeconds = parseInt(timeParts[0], 10) * 3600 + parseInt(timeParts[1], 10) * 60 + parseInt(timeParts[2], 10);
     const raptorData = await getRaptorData();
     const raptor = new Raptor(raptorData);
     const result = await raptor.findRoute(startLat, startLon, destLat, destLon, reqTimeSeconds, 3);
+    
+    const perfEnd = performance.now();
+    console.log(`Waktu pencarian rute (raptor): ${(perfEnd - perfStart).toFixed(2)} ms`);
+    
     if (!result) return res.json({ message: 'No route found', type: 'none' });
     if (result.error) return res.json({ message: result.error, type: 'none' });
     res.json({ itineraries: result.journeys?.map(j => ({ type: 'raptor', score: j.arrivalTime - reqTimeSeconds, arrivalTime: j.arrivalTime, journey: j.journey })) || [] });
